@@ -52,7 +52,7 @@ resource "cloudfoundry_app" "spark-worker" {
   disk_quota   = 2048
   instances    = var.workers_size
   docker_image = local.spark_docker_image
-  stopped      = true
+  stopped      = false
   health_check_type = "process"
 
   environment = {
