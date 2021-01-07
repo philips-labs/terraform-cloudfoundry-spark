@@ -14,14 +14,25 @@ data "cloudfoundry_domain" "internal" {
   name = "apps.internal"
 }
 
+locals {
+  spark_docker_image = "docker.io/bitnami/spark:3-debian-10"
+}
+
 resource "cloudfoundry_app" "spark-master" {
   name         = "spark-master"
   space        = data.cloudfoundry_space.space.id
   memory       = 1024
   disk_quota   = 2048
   health_check_type = "process"
-  docker_image = "gcr.io/google_containers/spark:1.5.2_v1"
-  command      = "sleep 20 && /bin/bash -c \". /start-common.sh; /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master --ip ${cloudfoundry_route.spark-master.endpoint} --port 7077 --webui-port 8080\""
+  docker_image = local.spark_docker_image
+  environment = {
+    "SPARK_MODE"                              = "master"
+    "SPARK_RPC_AUTHENTICATION_ENABLED"        = "no"
+    "SPARK_RPC_ENCRYPTION_ENABLED"            = "no"
+    "SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED"  = "no"
+    "SPARK_SSL_ENABLED"                       = "no"
+    "SPARK_MASTER_HOST"                       = cloudfoundry_route.spark-master.endpoint
+  }
 
   routes {
     route = cloudfoundry_route.spark-master.id
@@ -37,12 +48,24 @@ resource "cloudfoundry_route" "spark-master" {
 resource "cloudfoundry_app" "spark-worker" {
   name         = "spark-worker"
   space        = data.cloudfoundry_space.space.id
-  memory       = 4096
+  memory       = 3072
   disk_quota   = 2048
-  instances    = 3
+  instances    = var.workers_size
+  docker_image = local.spark_docker_image
   stopped      = true
-  docker_image = "gcr.io/google_containers/spark:1.5.2_v1"
-  command      = "sleep 20 && /bin/bash -c \". /start-common.sh; /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://${cloudfoundry_route.spark-master.endpoint}:7077 --port 7077 --webui-port 8080 -m 2G -c 2\""
+  health_check_type = "process"
+
+  environment = {
+    "SPARK_MODE"                              = "worker"
+    "SPARK_RPC_AUTHENTICATION_ENABLED"        = "no"
+    "SPARK_RPC_ENCRYPTION_ENABLED"            = "no"
+    "SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED"  = "no"
+    "SPARK_SSL_ENABLED"                       = "no"
+    "SPARK_MASTER_URL"                        = "spark://${cloudfoundry_route.spark-master.endpoint}:7077"
+    "SPARK_WORKER_CORES"                      = "2"
+    "SPARK_WORKER_MEMORY"                     = "3G"
+  }
+
   routes {
     route = cloudfoundry_route.spark-worker.id
   }
@@ -61,11 +84,19 @@ resource "cloudfoundry_app" "spark-user" {
   memory       = 1024
   disk_quota   = 2048
   health_check_type = "process"
-  docker_image = "gcr.io/google_containers/spark:1.5.2_v1"
+  docker_image = local.spark_docker_image
   command      = "sleep 36000"
 
   environment = {
     "MASTER" = "spark://${cloudfoundry_route.spark-master.endpoint}:7077"
+    "SPARK_MODE"                              = "worker"
+    "SPARK_RPC_AUTHENTICATION_ENABLED"        = "no"
+    "SPARK_RPC_ENCRYPTION_ENABLED"            = "no"
+    "SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED"  = "no"
+    "SPARK_SSL_ENABLED"                       = "no"
+    "SPARK_MASTER_URL"                        = "spark://${cloudfoundry_route.spark-master.endpoint}:7077"
+    "SPARK_WORKER_CORES"                      = "2"
+    "SPARK_WORKER_MEMORY"                     = "3G"    
   }
 
   routes {
