@@ -41,3 +41,9 @@ variable "name_postfix" {
   default     = ""
   description = "Optional postfix to append in routes"
 }
+
+variable "workers_size" {
+  type        = number
+  default     = 3
+  description = "The number of workers for the spark server"
+}
