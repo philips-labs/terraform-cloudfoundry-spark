@@ -15,7 +15,7 @@ data "cloudfoundry_domain" "internal" {
 }
 
 locals {
-  spark_docker_image = "docker.io/bitnami/spark:3-debian-10"
+  spark_docker_image = "skprasad/spark:v0.0.1"
 }
 
 resource "cloudfoundry_app" "spark-master" {
@@ -52,7 +52,7 @@ resource "cloudfoundry_app" "spark-worker" {
   disk_quota   = 2048
   instances    = var.workers_size
   docker_image = local.spark_docker_image
-  stopped      = true
+  stopped      = false
   health_check_type = "process"
 
   environment = {
@@ -110,8 +110,6 @@ resource "cloudfoundry_route" "spark-user" {
   hostname = var.name_postfix == "" ? "spark-user" : "spark-user-${var.name_postfix}"
 
 }
-
-
 
 resource "cloudfoundry_app" "spark-ui-proxy" {
   name         = "spark-ui-proxy"
