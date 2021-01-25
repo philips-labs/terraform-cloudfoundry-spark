@@ -49,7 +49,7 @@ resource "cloudfoundry_app" "spark-worker" {
   name         = "spark-worker"
   space        = data.cloudfoundry_space.space.id
   memory       = 3072
-  disk_quota   = 2048
+  disk_quota   = 5120
   instances    = var.workers_size
   docker_image = local.spark_docker_image
   stopped      = false
@@ -62,7 +62,7 @@ resource "cloudfoundry_app" "spark-worker" {
     "SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED"  = "no"
     "SPARK_SSL_ENABLED"                       = "no"
     "SPARK_MASTER_URL"                        = "spark://${cloudfoundry_route.spark-master.endpoint}:7077"
-    "SPARK_WORKER_CORES"                      = "2"
+    "SPARK_WORKER_CORES"                      = "5"
     "SPARK_WORKER_MEMORY"                     = "3G"
   }
 
