@@ -15,7 +15,7 @@ data "cloudfoundry_domain" "internal" {
 }
 
 locals {
-  spark_docker_image = "skprasad/spark:v0.0.1"
+  spark_docker_image = var.spark_docker_image
 }
 
 resource "cloudfoundry_app" "spark-master" {
@@ -25,6 +25,10 @@ resource "cloudfoundry_app" "spark-master" {
   disk_quota   = 2048
   health_check_type = "process"
   docker_image = local.spark_docker_image
+  docker_credentials = {
+    username = var.docker_username
+    password = var.docker_password
+  }
   environment = {
     "SPARK_MODE"                              = "master"
     "SPARK_RPC_AUTHENTICATION_ENABLED"        = "no"
@@ -54,6 +58,10 @@ resource "cloudfoundry_app" "spark-worker" {
   docker_image = local.spark_docker_image
   stopped      = false
   health_check_type = "process"
+  docker_credentials = {
+    username = var.docker_username
+    password = var.docker_password
+  }
 
   environment = {
     "SPARK_MODE"                              = "worker"
@@ -78,14 +86,19 @@ resource "cloudfoundry_route" "spark-worker" {
 }
 
 
-resource "cloudfoundry_app" "spark-user" {
-  name         = "spark-user"
+resource "cloudfoundry_app" "spark-history-server" {
+  name         = "spark-history-server"
   space        = data.cloudfoundry_space.space.id
-  memory       = 1024
+  memory       = 512
   disk_quota   = 2048
   health_check_type = "process"
   docker_image = local.spark_docker_image
+  #command      = "/opt/bitnami/spark/sbin/start-history-server.sh"
   command      = "sleep 36000"
+  docker_credentials = {
+    username = var.docker_username
+    password = var.docker_password
+  }
 
   environment = {
     "MASTER" = "spark://${cloudfoundry_route.spark-master.endpoint}:7077"
@@ -96,18 +109,25 @@ resource "cloudfoundry_app" "spark-user" {
     "SPARK_SSL_ENABLED"                       = "no"
     "SPARK_MASTER_URL"                        = "spark://${cloudfoundry_route.spark-master.endpoint}:7077"
     "SPARK_WORKER_CORES"                      = "2"
-    "SPARK_WORKER_MEMORY"                     = "3G"    
+    "SPARK_WORKER_MEMORY"                     = "3G"
   }
 
   routes {
-    route = cloudfoundry_route.spark-user.id
+    route = cloudfoundry_route.spark-history-server.id
   }
 }
 
-resource "cloudfoundry_route" "spark-user" {
+resource "cloudfoundry_route" "spark-history-server" {
   domain   = data.cloudfoundry_domain.internal.id
   space    = data.cloudfoundry_space.space.id
-  hostname = var.name_postfix == "" ? "spark-user" : "spark-user-${var.name_postfix}"
+  hostname = var.name_postfix == "" ? "spark-history-server" : "spark-history-server-${var.name_postfix}"
+
+}
+
+resource "cloudfoundry_route" "spark-history-server_p" {
+  domain   = data.cloudfoundry_domain.external.id
+  space    = data.cloudfoundry_space.space.id
+  hostname = var.name_postfix == "" ? "spark-history-server" : "spark-history-${var.name_postfix}"
 
 }
 
@@ -118,8 +138,8 @@ resource "cloudfoundry_app" "spark-ui-proxy" {
   disk_quota   = 2048
   health_check_type = "process"
   docker_image = "ursuad/spark-ui-proxy:v1.0.0"
-  command      = "python /spark-ui-proxy.py ${cloudfoundry_route.spark-master.endpoint}:8080"  
-  
+  command      = "python /spark-ui-proxy.py ${cloudfoundry_route.spark-master.endpoint}:8080"
+
   routes {
     route = cloudfoundry_route.spark-ui-proxy.id
   }
@@ -155,14 +175,14 @@ resource "cloudfoundry_network_policy" "my_policy" {
   }
 
   policy {
-    source_app      = cloudfoundry_app.spark-user.id
+    source_app      = cloudfoundry_app.spark-history-server.id
     destination_app = cloudfoundry_app.spark-master.id
     port            = "1000-65353"
     protocol        = "tcp"
   }
 
     policy {
-    source_app      = cloudfoundry_app.spark-user.id
+    source_app      = cloudfoundry_app.spark-history-server.id
     destination_app = cloudfoundry_app.spark-worker.id
     port            = "1000-65353"
     protocol        = "tcp"
@@ -170,14 +190,14 @@ resource "cloudfoundry_network_policy" "my_policy" {
 
     policy {
     source_app      = cloudfoundry_app.spark-master.id
-    destination_app = cloudfoundry_app.spark-user.id
+    destination_app = cloudfoundry_app.spark-history-server.id
     port            = "1000-65353"
     protocol        = "tcp"
   }
 
     policy {
     source_app      = cloudfoundry_app.spark-worker.id
-    destination_app = cloudfoundry_app.spark-user.id
+    destination_app = cloudfoundry_app.spark-history-server.id
     port            = "1000-65353"
     protocol        = "tcp"
   }
