@@ -25,10 +25,7 @@ resource "cloudfoundry_app" "spark-master" {
   disk_quota   = 2048
   health_check_type = "process"
   docker_image = local.spark_docker_image
-  docker_credentials = {
-    username = var.docker_username
-    password = var.docker_password
-  }
+
   environment = {
     "SPARK_MODE"                              = "master"
     "SPARK_RPC_AUTHENTICATION_ENABLED"        = "no"
@@ -58,10 +55,6 @@ resource "cloudfoundry_app" "spark-worker" {
   docker_image = local.spark_docker_image
   stopped      = false
   health_check_type = "process"
-  docker_credentials = {
-    username = var.docker_username
-    password = var.docker_password
-  }
 
   environment = {
     "SPARK_MODE"                              = "worker"
@@ -94,10 +87,6 @@ resource "cloudfoundry_app" "spark-history-server" {
   health_check_type = "process"
   docker_image = local.spark_docker_image
   command      = "/opt/bitnami/spark/sbin/start-history-server.sh"
-  docker_credentials = {
-    username = var.docker_username
-    password = var.docker_password
-  }
 
   environment = {
     "MASTER" = "spark://${cloudfoundry_route.spark-master.endpoint}:7077"
@@ -110,7 +99,7 @@ resource "cloudfoundry_app" "spark-history-server" {
     "SPARK_WORKER_CORES"                      = "2"
     "SPARK_WORKER_MEMORY"                     = "3G"
     "SPARK_NO_DAEMONIZE"                      = true
-    "SPARK_HISTORY_OPTS"                      = "-Dspark.history.fs.logDirectory=s3a://cf-s3-153af3cf-50c6-41d5-9fcd-a476e66dd16f/spar-logs -Dspark.hadoop.fs.s3a.access.key=AKIAX4PQXA76S62LOHMR -Dspark.hadoop.fs.s3a.secret.key=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 -Dspark.hadoop.fs.s3a.impl=org.apache.hadoop.fs.s3a.S3AFileSystem -Dspark.history.ui.port=8080"
+    "SPARK_HISTORY_OPTS"                      = "-Dspark.history.fs.logDirectory=s3a://${var.s3_event_log_details.bucket_name}/${var.s3_event_log_details.event_log_dir} -Dspark.hadoop.fs.s3a.access.key=${var.s3_event_log_details.access_key} -Dspark.hadoop.fs.s3a.secret.key=${var.s3_event_log_details.secret_key} -Dspark.hadoop.fs.s3a.impl=org.apache.hadoop.fs.s3a.S3AFileSystem -Dspark.history.ui.port=8080"
   }
 
   routes {
@@ -119,7 +108,7 @@ resource "cloudfoundry_app" "spark-history-server" {
 }
 
 resource "cloudfoundry_route" "spark-history-server" {
-  domain   = data.cloudfoundry_domain.internal.id
+  domain   = data.cloudfoundry_domain.external.id
   space    = data.cloudfoundry_space.space.id
   hostname = var.name_postfix == "" ? "spark-history-server" : "spark-history-server-${var.name_postfix}"
 
