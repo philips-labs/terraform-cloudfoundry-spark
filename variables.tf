@@ -47,3 +47,30 @@ variable "workers_size" {
   default     = 3
   description = "The number of workers for the spark server"
 }
+
+variable "spark_docker_image" {
+  type        = string
+  default     = "skprasad/spark:v0.0.2"
+  description = "Spark image to be used"
+}
+
+variable "docker_username" {
+  type        = string
+  description = "docker registry username"
+  default     = ""
+}
+
+variable "docker_password" {
+  type        = string
+  description = "Docker registry password"
+  default     = ""
+}
+
+variable "s3_event_log_details" {
+  type = object({
+    bucket_name     = string
+    event_log_dir   = string
+    access_key      = string
+    secret_key      = string
+  })
+}
