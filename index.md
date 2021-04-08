@@ -1,37 +1,15 @@
-## Welcome to GitHub Pages
+## Welcome to terrafrom-cloundfoundry-spark
 
-You can use the [editor on GitHub](https://github.com/philips-labs/terraform-cloudfoundry-spark/edit/gh-pages/index.md) to maintain and preview the content for your website in Markdown files.
+This project is used to deploy a fully functional spark cluster on cloud foundry. If you probject just needs a spark cluster (as of 2021 April HSDP has not made one avaiable) this could help you.  This cluster by default contains
+1) A Spark Master
+2) 3 Spark Workers
+3) A Spark UI proxy which allows you to traverse the UI of various workers
+4) A Spark history server.
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
+### More documentation
+to follow.
 
-### Markdown
-
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
-
-```markdown
-Syntax highlighted code block
-
-# Header 1
-## Header 2
-### Header 3
-
-- Bulleted
-- List
-
-1. Numbered
-2. List
-
-**Bold** and _Italic_ and `Code` text
-
-[Link](url) and ![Image](src)
-```
-
-For more details see [GitHub Flavored Markdown](https://guides.github.com/features/mastering-markdown/).
-
-### Jekyll Themes
-
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/philips-labs/terraform-cloudfoundry-spark/settings). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
 
 ### Support or Contact
 
-Having trouble with Pages? Check out our [documentation](https://docs.github.com/categories/github-pages-basics/) or [contact support](https://support.github.com/contact) and we’ll help you sort it out.
+krishna.prasad.srinivasan@philips.com
