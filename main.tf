@@ -93,8 +93,7 @@ resource "cloudfoundry_app" "spark-history-server" {
   disk_quota   = 2048
   health_check_type = "process"
   docker_image = local.spark_docker_image
-  #command      = "/opt/bitnami/spark/sbin/start-history-server.sh"
-  command      = "sleep 36000"
+  command      = "/opt/bitnami/spark/sbin/start-history-server.sh"
   docker_credentials = {
     username = var.docker_username
     password = var.docker_password
@@ -110,6 +109,8 @@ resource "cloudfoundry_app" "spark-history-server" {
     "SPARK_MASTER_URL"                        = "spark://${cloudfoundry_route.spark-master.endpoint}:7077"
     "SPARK_WORKER_CORES"                      = "2"
     "SPARK_WORKER_MEMORY"                     = "3G"
+    "SPARK_NO_DAEMONIZE"                      = true
+    "SPARK_HISTORY_OPTS"                      = "-Dspark.history.fs.logDirectory=s3a://cf-s3-153af3cf-50c6-41d5-9fcd-a476e66dd16f/spar-logs -Dspark.hadoop.fs.s3a.access.key=AKIAX4PQXA76S62LOHMR -Dspark.hadoop.fs.s3a.secret.key=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 -Dspark.hadoop.fs.s3a.impl=org.apache.hadoop.fs.s3a.S3AFileSystem -Dspark.history.ui.port=8080"
   }
 
   routes {
