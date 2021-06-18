@@ -1,8 +1,8 @@
 terraform {
   required_providers {
     cloudfoundry = {
-      source  = "philips-labs/cloudfoundry"
-      version = ">= 0.1300.2"
+      source = "cloudfoundry-community/cloudfoundry"
+      version = ">= 0.14.2"
     }
   }
 }
